@@ -1,12 +1,6 @@
 import numpy as np
 import pandas as pd
 
-
-# ----------------------------
-# Helpers
-# ----------------------------
-
-
 def smooth_state(series: pd.Series, window=5) -> pd.Series:
     """
     Smooth categorical states using rolling majority vote
@@ -40,40 +34,35 @@ def confirm_regime(series: pd.Series, min_days=3) -> pd.Series:
     return confirmed
 
 
-# ----------------------------
-# Method 1
-# ----------------------------
-
-
 def apply_method_1(
     df: pd.DataFrame, calibration_start="2000", calibration_end="2020"
 ) -> pd.DataFrame:
 
     calib = df.loc[calibration_start:calibration_end]
 
-    # --- Volatility thresholds
+    # Volatility thresholds
     low_vol = calib["vol_20d"].quantile(0.33)
     high_vol = calib["vol_20d"].quantile(0.66)
     mid_vol = (low_vol + high_vol) / 2
 
-    # --- Trend state
+    # Trend state
     df["trend_state"] = np.where(
         df["price"] > df["ma_200"],
         "UP",
         np.where(df["price"] < df["ma_200"], "DOWN", "NEUTRAL"),
     )
 
-    # --- Raw volatility state
+    # Raw volatility state
     df["vol_state_raw"] = pd.cut(
         df["vol_20d"],
         bins=[-np.inf, low_vol, high_vol, np.inf],
         labels=["LOW", "MEDIUM", "HIGH"],
     ).astype(str)
 
-    # --- Smoothed volatility state
+    # Smoothed volatility state
     df["vol_state"] = smooth_state(df["vol_state_raw"], window=5)
 
-    # --- Regime logic
+    # Regime logic
     def classify(row):
         if row["trend_state"] == "UP" and row["vol_state"] == "LOW":
             return "RISK_ON"
@@ -87,14 +76,14 @@ def apply_method_1(
 
     df["regime_raw"] = df.apply(classify, axis=1)
 
-    # --- Confirm regime persistence
+    # confirming regime persistence
     df["regime"] = confirm_regime(df["regime_raw"], min_days=3)
 
-    # ----------------------------
+    # ----------------
     # Confidence score
-    # ----------------------------
+    # ----------------
 
-    # Trend strength (5% = strong)
+    # Trend strength 5% = strong
     trend_score = np.clip(np.abs(df["trend_dist"]) / 0.05, 0, 1)
 
     # Volatility distance from mid
@@ -109,3 +98,4 @@ def apply_method_1(
     df["confidence"] = 0.4 * trend_score + 0.3 * vol_score + 0.3 * duration_score
 
     return df
+
