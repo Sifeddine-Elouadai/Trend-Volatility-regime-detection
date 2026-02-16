@@ -35,21 +35,29 @@ The price series represents the final aggregation of all available market inform
 
 ### 2. Log Returns
 Daily log returns are computed as:
+r_t = log(P_t / P_{t-1})
+
 
 Log returns are additive over time, scale-invariant, and standard in financial modeling. Returns are used as inputs for risk measurement, not as predictive signals.
 
 ### 3. Realized Volatility (20-Day)
 Realized volatility is estimated as:
+σ_20(t) = √252 * std(r_{t-19:t})
+
 
 Volatility captures market stress, uncertainty, leverage effects, and information shocks. It is treated as a regime variable, not a directional signal.
 
 ### 4. 200-Day Moving Average
 The 200-day moving average is defined as:
+MA_200(t) = (1/200) * Σ(P_{t-i}) for i = 0 to 199
+
 
 This indicator approximates the market's long-term equilibrium and reflects the horizon at which large institutional capital reallocates.
 
 ### 5. Trend Distance
 Trend strength is measured by the normalized distance between price and its long-term equilibrium:
+TrendDist_t = (P_t - MA_200(t)) / MA_200(t)
+
 
 This quantity captures the conviction and maturity of the prevailing trend.
 
