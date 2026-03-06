@@ -1,8 +1,8 @@
-# Method 1 — Trend × Volatility Market Regime Detection
+# Trend × Volatility Market Regime Detection
 
-> A rule-based, look-ahead-free framework that classifies every trading day into one of six
+> A framework that classifies every trading day into one of six
 > structurally distinct market regimes using price trend and realised volatility.
-> Built on 26 years of SPY data (2000–2026) with zero data leakage, full backtest statistics,
+> Built on 26 years of S&P 500 data (2000–2026).
 > a confidence score, and a complete visualisation suite.
 
 ---
@@ -10,12 +10,12 @@
 ## The Core Idea
 
 Most quantitative models try to predict **where** the market will go. This framework answers
-a different — and more tractable — question:
+a different and more tractable question:
 
 **What kind of environment is the market operating in right now?**
 
 Markets cycle through structurally different states. A calm uptrend, a fragile rally, a quiet
-deterioration before a crash, and outright panic are not just different in degree — they are
+deterioration before a crash, and outright panic are not just different in degree, they are
 different in kind. Risk premia, drawdown profiles, correlation structures, and the right
 portfolio behaviour all change depending on which state you are in.
 
@@ -52,10 +52,10 @@ with tighter controls. Do not add to positions until volatility resolves lower.*
 
 > **On the RISK\_ON return:** The 3.9% aggregate figure is a known statistical artefact of
 > computing returns over 1,962 non-consecutive fragmented days spanning 26 years. When broken
-> into coherent calendar sub-periods, RISK\_ON produces Sharpe ratios of 0.64–2.18 — among
+> into coherent calendar sub-periods, RISK\_ON produces Sharpe ratios of 0.64–2.18 among
 > the best risk-adjusted performance of any regime. The correct metrics here are
 > **Sharpe ratio** and **max drawdown (−22.3%)**, not raw return.
-> Full explanation in the [model manual](Method1_Model_Manual.pdf).
+> Full explanation in the [model manual](Model_Manual.pdf).
 
 ---
 
@@ -66,10 +66,10 @@ history has already judged. No parameters were tuned to these outcomes.
 
 | Year | Event | Model Output | Verdict |
 |---|---|---|---|
-| 2008 | Global Financial Crisis | 217d RISK\_OFF, 36d RISK\_OFF\_TRANSITION | ✅ Nearly the entire year correctly risk-off |
-| 2017 | Quietest bull market in SPY history | 251d RISK\_ON — the full year, uninterrupted | ✅ 100% RISK\_ON, zero noise |
-| 2020 | COVID crash + violent recovery | 57d RISK\_OFF → BULL\_EXPANSION → RISK\_ON\_FRAGILE | ✅ Captures both crash and recovery |
-| 2022 | Fed rate-hike bear market | 199d RISK\_OFF, 29d BULL\_EXPANSION (bounces) | ✅ Predominantly risk-off through the drawdown |
+| 2008 | Global Financial Crisis | 217d RISK\_OFF, 36d RISK\_OFF\_TRANSITION | Nearly the entire year correctly risk-off |
+| 2017 | Quietest bull market in SPY history | 251d RISK\_ON — the full year, uninterrupted | 100% RISK\_ON, zero noise |
+| 2020 | COVID crash + violent recovery | 57d RISK\_OFF → BULL\_EXPANSION → RISK\_ON\_FRAGILE | Captures both crash and recovery |
+| 2022 | Fed rate-hike bear market | 199d RISK\_OFF, 29d BULL\_EXPANSION (bounces) | Predominantly risk-off through the drawdown |
 
 ---
 
@@ -77,7 +77,7 @@ history has already judged. No parameters were tuned to these outcomes.
 
 ### Step 1 — Features (`features.py`)
 
-All inputs derived from daily closing prices. No external data, no analyst estimates.
+All inputs are derived from daily closing prices. No external data, no analyst estimates.
 
 | Feature | Formula | Role |
 |---|---|---|
@@ -94,7 +94,7 @@ All inputs derived from daily closing prices. No external data, no analyst estim
 
 **Volatility state** — realised vol discretised using quantile thresholds estimated
 **exclusively on the 2000–2020 calibration window** and applied as fixed constants to all
-data including the out-of-sample period. Zero look-ahead.
+data, including the out-of-sample period. Zero look-ahead.
 
 - `LOW` (≤ 33rd pct) · `MEDIUM` (33rd–66th pct) · `HIGH` (> 66th pct)
 - Smoothed with a **5-day rolling majority vote** to suppress threshold-boundary flicker
@@ -149,9 +149,9 @@ On any given day, the empirical probability of staying in or leaving the current
 | **RISK\_OFF\_TRANSITION** | 0% | 3% | 1% | **91%** | 5% |
 | **RISK\_OFF** | 0% | 0% | 1% | 1% | **98%** |
 
-Two things stand out. First, **RISK\_ON never transitions directly to RISK\_OFF (0%)** — the
+Two things stand out. First, **RISK\_ON never transitions directly to RISK\_OFF (0%)** the
 market always deteriorates through intermediate regimes first, giving time to act.
-Second, RISK\_OFF\_TRANSITION → RISK\_OFF runs at 5% per day — quiet and underestimated,
+Second, RISK\_OFF\_TRANSITION → RISK\_OFF runs at 5% per day, quiet and underestimated,
 but compounding quickly over a two-to-three week horizon.
 
 ---
@@ -183,28 +183,6 @@ but compounding quickly over a two-to-three week horizon.
 
 ---
 
-## Quick Start
-
-```bash
-# 1. Clone
-git clone https://github.com/your-username/regime-detection.git
-cd regime-detection
-
-# 2. Install (Python 3.10+)
-pip install -r requirements.txt
-
-# 3. Run with SPY (default)
-python run.py
-
-# 4. Run with any ticker
-python run.py QQQ
-```
-
-Data is downloaded automatically via `yfinance`.
-Minimum 2,000 trading days of price history required (~8 years).
-
----
-
 ## Project Structure
 
 ```
@@ -217,7 +195,7 @@ regime-detection/
 ├── run.py                    # End-to-end pipeline; accepts ticker as CLI argument
 ├── requirements.txt
 ├── README.md
-└── Method1_Model_Manual.pdf  # Complete model documentation (~40 pages)
+└── Method1_Model_Manual.pdf  # Model documentation
 ```
 
 ---
@@ -251,7 +229,7 @@ If the structural volatility of the market shifts materially, periodic recalibra
 stocks, fixed income, or commodities requires recalibrating the volatility thresholds.
 
 **Gross Sharpe ratios.** No risk-free rate is deducted. Subtract the prevailing short rate
-to compute excess-return Sharpe ratios (reduces all figures by roughly 0.2–0.5 depending
+to compute excess-return Sharpe ratios (reduces all figures by roughly 0.2–0.5, depending
 on the interest rate environment).
 
 **No transaction costs.** Backtest statistics assume frictionless execution.
@@ -266,16 +244,3 @@ the economic rationale for every parameter choice, the look-ahead bias problem a
 is avoided, the RISK\_ON return paradox with full sub-period analysis, crisis-year validation,
 transition matrix interpretation, and an honest accounting of all limitations.
 Written to be defensible as a standalone document.
-
----
-
-## Dependencies
-
-```
-yfinance  >= 0.2.40
-pandas    >= 2.0.0
-numpy     >= 1.26.0
-matplotlib>= 3.8.0
-```
-
-Python 3.10 or later required.
