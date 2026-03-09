@@ -1,245 +1,279 @@
-# Trend × Volatility Market Regime Detection
+# Trend x Volatility Market Regime Detection
 
-> A framework that classifies every trading day into one of six
-> structurally distinct market regimes using price trend and realised volatility.
-> Built on 26 years of S&P 500 data (2000–2026).
-> a confidence score, and a complete visualisation suite.
+Most models try to predict tomorrow's return. That's an almost impossible problem. But there's a simpler question that actually has an answer:
 
----
+**What kind of market are we in right now?**
 
-## The Core Idea
-
-Most quantitative models try to predict **where** the market will go. This framework answers
-a different and more tractable question:
-
-**What kind of environment is the market operating in right now?**
-
-Markets cycle through structurally different states. A calm uptrend, a fragile rally, a quiet
-deterioration before a crash, and outright panic are not just different in degree, they are
-different in kind. Risk premia, drawdown profiles, correlation structures, and the right
-portfolio behaviour all change depending on which state you are in.
-
-This framework detects those states in real time from price data alone.
+A calm uptrend is completely different from a violent recovery. A quiet sell-off before a crash
+looks nothing like a full panic. These environments need different behavior from a portfolio,
+but most people treat them the same. This project classifies every trading day into one of
+six clearly defined market regimes using nothing but price data. No external feeds, no analyst
+estimates, no machine learning. Tested on 26 years of SPY data (6,383 trading days) and
+every single classification traces back to the exact numbers that produced it.
 
 ---
 
-## Live Signal — As of 2026-03-05
+## Current Signal
+
+<table>
+<tr>
+<td width="55%">
+
+**As of 2026-03-05**
 
 ```
-Regime    : RISK_ON_FRAGILE
-Trend     : UP      │  Price is above the 200-day moving average
-Volatility: MEDIUM  │  Realised volatility in the middle tercile
-Confidence: 88.8%   │  Signal well-established; not a borderline call
+Regime      RISK_ON_FRAGILE
+Trend       UP       price is above the 200-day MA
+Volatility  MEDIUM   vol in the middle tercile
+Confidence  88.8%    well-established, not a borderline call
 ```
 
-*Interpretation: The uptrend is intact but stress is building. Maintain risk exposure
-with tighter controls. Do not add to positions until volatility resolves lower.*
+The uptrend is still intact, but volatility has crept into the middle zone.
+Historically that means the setup is less clean than it looks. Not the time to add risk.
+Hold existing positions with tighter controls and watch whether vol drops back down
+toward RISK_ON or keeps climbing toward something worse.
+
+</td>
+<td width="45%">
+
+![Current Regime](current_regime_card.png)
+
+</td>
+</tr>
+</table>
 
 ---
 
 ## The Six Regimes
 
-| Regime | Trend | Volatility | Character | Days* | Ann. Return | Sharpe |
+| | Regime | Condition | Days | Ann. Return | Sharpe | Max DD |
 |---|---|---|---|---|---|---|
-| 🟢 **RISK\_ON** | UP | LOW | Calm uptrend; shallow drawdowns; risk-taking structurally rewarded | 1,962 (30.7%) | +3.9% | 0.35 |
-| 🟡 **RISK\_ON\_FRAGILE** | UP | MEDIUM | Trend intact; stress rising; asymmetric downside risk | 1,989 (31.2%) | +11.7% | 0.88 |
-| 🟣 **BULL\_EXPANSION** | UP | HIGH | High-vol rally; late-cycle or post-crisis recovery | 598 (9.4%) | +24.1% | 1.46 |
-| ⚫ **NEUTRAL** | FLAT | ANY | Price near MA; no dominant signal; reduce exposure | — | — | — |
-| 🟠 **RISK\_OFF\_TRANSITION** | DOWN | LOW/MED | Quiet de-risking; the regime investors underestimate most | 340 (5.3%) | −10.2% | −0.52 |
-| 🔴 **RISK\_OFF** | DOWN | HIGH | Forced selling; deleveraging; capital preservation only | 1,494 (23.4%) | −1.1% | −0.04 |
+| 🟢 | **RISK_ON** | UP trend + LOW vol | 1,962 (30.7%) | +3.9% | 0.35 | -22.3% |
+| 🟡 | **RISK_ON_FRAGILE** | UP trend + MEDIUM vol | 1,989 (31.2%) | +11.7% | 0.88 | -22.0% |
+| 🟣 | **BULL_EXPANSION** | UP trend + HIGH vol | 598 (9.4%) | +24.1% | 1.46 | -12.7% |
+| ⚫ | **NEUTRAL** | Price near MA | rare | n/a | n/a | n/a |
+| 🟠 | **RISK_OFF_TRANSITION** | DOWN trend + LOW/MEDIUM vol | 340 (5.3%) | -10.2% | -0.52 | -30.3% |
+| 🔴 | **RISK_OFF** | DOWN trend + HIGH vol | 1,494 (23.4%) | -1.1% | -0.04 | -60.0% |
 
-*\*Days and statistics: SPY, Oct 2000 – Mar 2026 (6,383 trading days).*
+*SPY, Oct 2000 to Mar 2026.*
 
-> **On the RISK\_ON return:** The 3.9% aggregate figure is a known statistical artefact of
-> computing returns over 1,962 non-consecutive fragmented days spanning 26 years. When broken
-> into coherent calendar sub-periods, RISK\_ON produces Sharpe ratios of 0.64–2.18 among
-> the best risk-adjusted performance of any regime. The correct metrics here are
-> **Sharpe ratio** and **max drawdown (−22.3%)**, not raw return.
-> Full explanation in the [model manual](trend_volatility.pdf).
-
----
-
-## Validation Against Known Market Events
-
-The most important test for any regime model is whether it correctly classifies periods
-history has already judged. No parameters were tuned to these outcomes.
-
-| Year | Event | Model Output | Verdict |
-|---|---|---|---|
-| 2008 | Global Financial Crisis | 217d RISK\_OFF, 36d RISK\_OFF\_TRANSITION | Nearly the entire year correctly risk-off |
-| 2017 | Quietest bull market in SPY history | 251d RISK\_ON — the full year, uninterrupted | 100% RISK\_ON, zero noise |
-| 2020 | COVID crash + violent recovery | 57d RISK\_OFF → BULL\_EXPANSION → RISK\_ON\_FRAGILE | Captures both crash and recovery |
-| 2022 | Fed rate-hike bear market | 199d RISK\_OFF, 29d BULL\_EXPANSION (bounces) | Predominantly risk-off through the drawdown |
+> **Why does RISK_ON show only 3.9% return?** It's a statistical artefact, not a real weakness.
+> When you group 1,962 non-consecutive days scattered across 26 years, the compounding breaks down.
+> When RISK_ON is analysed in proper calendar blocks, it produces Sharpe ratios between 0.64 and 2.18
+> which is among the best of any regime in every single sub-period. The right number to look at is
+> the Sharpe (0.35 gross) and the max drawdown (-22.3%), not the raw return. Full explanation
+> in the [model manual](trend_volatility.pdf).
 
 ---
 
-## How It Works
+## 26 Years of Regimes at a Glance
 
-### 1. Features (`features.py`)
+![Market Regimes 2000-2026](txv_analysis.png)
 
-All inputs are derived from daily closing prices. No external data, no analyst estimates.
-
-| Feature | Formula | Role |
-|---|---|---|
-| Log return | `r_t = log(P_t / P_{t-1})` | Input for volatility computation |
-| Realised vol (20d) | `σ = sqrt(252) × std(r_{t-19:t})` | Volatility state variable |
-| 200-day MA | `MA = mean(P_{t-199:t})` | Long-term trend proxy (~1 business year) |
-| Trend distance | `(P_t − MA) / MA` | Trend conviction; feeds confidence score |
-
-### 2. State Variables (`method1.py`)
-
-**Trend state** — price position relative to the 200-day MA:
-
-- `UP` if price > MA · `DOWN` if price < MA · `NEUTRAL` if price ≈ MA
-
-**Volatility state** — realised vol discretised using quantile thresholds estimated
-**exclusively on the 2000–2020 calibration window** and applied as fixed constants to all
-data, including the out-of-sample period. Zero look-ahead.
-
-- `LOW` (≤ 33rd pct) · `MEDIUM` (33rd–66th pct) · `HIGH` (> 66th pct)
-- Smoothed with a **5-day rolling majority vote** to suppress threshold-boundary flicker
-
-### 3. Regime Classification
-
-A 3×2 grid maps every (trend state, vol state) pair to a named regime:
-
-```
-               VOL: LOW           VOL: MEDIUM        VOL: HIGH
-Trend: UP    → RISK_ON            RISK_ON_FRAGILE    BULL_EXPANSION
-Trend: DOWN  → RISK_OFF_TRANS.    RISK_OFF_TRANS.    RISK_OFF
-Trend: FLAT  → NEUTRAL            NEUTRAL            NEUTRAL
-```
-
-### 4. Persistence Filter
-
-A candidate regime must appear on **3 consecutive days** before it is accepted.
-Until confirmed, the previous regime is carried forward.
-
-Result: **zero regime blocks shorter than 3 days** across 281 total blocks and 6,383 trading
-days. The filter is strictly backward-looking — no look-ahead.
-
-### 5. Confidence Score
-
-A composite `[0, 1]` score measuring how clearly the market is expressing the current regime:
-
-```
-Confidence = 0.4 × TrendScore + 0.3 × VolScore + 0.3 × DurationScore
-```
-
-| Component | Weight | What it measures |
-|---|---|---|
-| TrendScore | 40% | Distance of price from MA, normalised at 5% threshold |
-| VolScore | 30% | How far vol sits from the nearest classification boundary |
-| DurationScore | 30% | Regime persistence — saturates at 20 consecutive days |
-
-All thresholds are calibration-period constants. Out-of-sample data never re-enters the formula.
+Each background colour is a regime. The dark line is price and the dashed line is the 200-day
+moving average. You can see the dot-com crash running red from 2000 to 2003, the 2008 GFC as
+nearly a full year of deep red, the quiet and uninterrupted green block of 2017, the rapid
+colour shift in 2020 as the COVID crash hit and then recovered, and the 2022 rate-hike bear
+turning red again. No parameters were tuned to fit these events. This is what comes out
+when you run the model on the data cold.
 
 ---
 
-## Regime Transition Probabilities
+## The Full Timeline, Day by Day
 
-On any given day, the empirical probability of staying in or leaving the current regime
-(computed from 6,383 days of data):
+![Regime Timeline Heatmap](regime_timeline_heatmap.png)
 
-| From \ To | RISK\_ON | RISK\_ON\_FRAG | BULL\_EXP | RISK\_OFF\_TRANS | RISK\_OFF |
-|---|---|---|---|---|---|
-| **RISK\_ON** | **96%** | 3% | 0% | 0% | 0% |
-| **RISK\_ON\_FRAGILE** | 4% | **95%** | 1% | 1% | 0% |
-| **BULL\_EXPANSION** | 0% | 5% | **93%** | 0% | 2% |
-| **RISK\_OFF\_TRANSITION** | 0% | 3% | 1% | **91%** | 5% |
-| **RISK\_OFF** | 0% | 0% | 1% | 1% | **98%** |
+Every single trading day from 2001 to 2026, one colour per day. This view makes it easy
+to see how long each regime actually lasted. The 2017 green block is one
+continuous stretch. The 2008 red block is relentless. The 2020 section shifts from red
+to purple to yellow in a matter of months as the crash resolved and the recovery took hold.
 
-Two things stand out. First, **RISK\_ON never transitions directly to RISK\_OFF (0%)** the
-market always deteriorates through intermediate regimes first, giving time to act.
-Second, RISK\_OFF\_TRANSITION → RISK\_OFF runs at 5% per day, quiet and underestimated,
-but compounding quickly over a two-to-three week horizon.
+---
+
+## How Each Regime Actually Performed
+
+![Performance Analytics](performance_analytics.png)
+
+Top left is annualised return, top right is Sharpe ratio, bottom left is max drawdown,
+bottom right is how much of the 26-year history each regime occupied.
+
+A few things stand out. BULL_EXPANSION has the best Sharpe (1.46) and
+the shallowest drawdown (-12.7%) but it only shows up 9.4% of the time and the exits
+can be brutal. RISK_OFF_TRANSITION is the most interesting one because it looks
+calm on the surface but it loses -10.2% annualised. People often read that environment
+as a buying opportunity. It usually isn't. RISK_OFF takes up nearly a quarter of all
+trading days in the full history, which is more than most people expect.
+
+---
+
+## How Confident Is the Signal?
+
+![Confidence Overlay](regime_confidence_overlay.png)
+
+The dark line is price. The filled area behind it is the confidence score on the right axis.
+What stands out in this chart is how clearly the score collapses to near zero at
+every regime transition and then rebuild over the days that follow. A freshly confirmed regime
+sitting at 35% confidence is a very different signal from one that has been running above 90%
+for three weeks.
+
+The score is built from three components:
+
+```
+Confidence = 0.4 x TrendScore     how far price is from the 200-day MA
+           + 0.3 x VolScore       how far vol sits from its nearest boundary
+           + 0.3 x DurationScore  how long this regime has been active
+```
+
+Across the full dataset it ranges from 0.03 to 1.0 with a mean of 0.63.
+
+---
+
+## How Regimes Move Into Each Other
+
+![Transition Probabilities](transition_probabilities.png)
+
+Each cell is the daily probability of moving from one regime (the row) to another (the column).
+The diagonal dominates because regimes are sticky. The interesting part is the off-diagonal.
+
+Two things stand out to me. First, **RISK_ON never transitions directly to RISK_OFF (0%)**.
+When a calm uptrend starts to break down the market always moves through an intermediate
+state first. You always get a warning before the worst of it hits.
+
+Second, **RISK_OFF_TRANSITION moves into RISK_OFF at 5% per day**. That sounds small but
+over three weeks the cumulative probability of flipping into full RISK_OFF crosses 50%.
+The time to reduce risk is when RISK_OFF_TRANSITION appears, not after volatility spikes and
+RISK_OFF is confirmed. By then the damage is usually already happening.
+
+---
+
+## How to Run It
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/Sifeddine-Elouadai/Trend-Volatility-regime-detection.git
+cd Trend-Volatility-regime-detection
+
+# 2. Install dependencies (Python 3.10+)
+pip install -r requirements.txt
+
+# 3. Run on SPY (default)
+python run.py
+
+# 4. Or pass any ticker
+python run.py QQQ
+python run.py AAPL
+python run.py GLD
+```
+
+Data downloads automatically from Yahoo Finance. No API keys needed. The ticker needs
+at least 8 years of price history for the 200-day MA and calibration window to work properly.
+
+Here is what happens when you run it, in order:
+
+1. Download price data from Yahoo Finance
+2. Compute log returns, 20-day realised vol, 200-day moving average, and trend distance
+3. Load the volatility thresholds from the 2000-2020 calibration window (fixed constants, never updated)
+4. Classify each day's trend as UP, DOWN, or NEUTRAL by comparing price to the 200-day MA
+5. Classify each day's vol as LOW, MEDIUM, or HIGH using the thresholds, then smooth with a 5-day rolling majority vote
+6. Map each (trend, vol) pair to one of the six regime names
+7. Run the persistence filter: any regime that doesn't hold for 3 consecutive days is rejected and the previous one carries forward
+8. Compute the confidence score for every day
+9. Print the terminal signal, save six charts, and write two CSV files
+
+**Sample terminal output:**
+```
+2026-03-05 | RISK_ON_FRAGILE   | Trend: UP   | Vol: MEDIUM | Conf: 88.8%
+```
 
 ---
 
 ## Outputs
 
-**Terminal live signal, last 5 trading days**
-```
-2026-03-05 | RISK_ON_FRAGILE      | Trend: UP      | Vol: MEDIUM | Conf: [█████████████████░░░] 88.8%
-```
+**Charts saved on every run:**
 
-**Charts: 6 visualisations generated on every run**
-
-| Chart | What it shows |
+| File | What it shows |
 |---|---|
-| Main regime chart | 26-year price history with colour-coded regime backgrounds and 200-day MA |
-| Regime timeline heatmap | Single-band regime sequence from 2000 to present with correct year labels |
-| Confidence overlay | Price with confidence score on secondary axis; drops sharply at every transition |
-| Performance dashboard | 2×2 grid: annualised return, Sharpe ratio, max drawdown, time allocation |
-| Current regime card | Today's regime, trend, vol state, and confidence at a glance |
-| Transition matrix | Empirical heatmap of regime-to-regime daily transition probabilities |
+| `txv_analysis.png` | 26-year price history with colour-coded regime backgrounds |
+| `regime_timeline_heatmap.png` | Every trading day as a colour band from 2001 to present |
+| `regime_confidence_overlay.png` | Price with confidence score on secondary axis |
+| `performance_analytics.png` | Return, Sharpe, max drawdown, and time allocation per regime |
+| `current_regime_card.png` | Today's regime, trend, vol, and confidence at a glance |
+| `transition_probabilities.png` | Regime-to-regime daily transition rates |
 
-**CSV exports — written on every run**
+**CSV files written on every run:**
 
 | File | Contents |
 |---|---|
-| `regime_history.csv` | Day-by-day: price, trend state, vol state, regime, confidence |
-| `regime_statistics.csv` | Per-regime: annualised return, volatility, Sharpe ratio, max drawdown, observations |
+| `regime_history.csv` | Day-by-day: date, price, trend state, vol state, regime, confidence |
+| `regime_statistics.csv` | Per-regime: annualised return, vol, Sharpe, max drawdown, observation count |
 
 ---
 
 ## Project Structure
 
 ```
-regime-detection/
-├── data.py                   # Downloads and validates price data via yfinance
-├── features.py               # Log returns, 20d realised vol, 200d MA, trend distance
-├── method1.py                # Core engine: discretisation, classification, persistence, confidence
-├── analytics.py              # Per-regime performance statistics and bar charts
-├── plotting.py               # All six visualisation types
-├── run.py                    # End-to-end pipeline; accepts ticker as CLI argument
-├── README.md
-└── trend_volatility.pdf  # Model documentation
+├── data.py               downloads and validates price data via yfinance
+├── features.py           log returns, 20-day vol, 200-day MA, trend distance
+├── method1.py            core engine: classification, persistence filter, confidence score
+├── analytics.py          per-regime performance statistics
+├── plotting.py           all six chart types
+├── run.py                end-to-end pipeline, accepts any ticker as argument
+├── requirements.txt
+└── trend_volatility.pdf  complete model documentation (21 pages)
 ```
 
 ---
 
-## Design Principles
+## Design Decisions
 
-**No look-ahead bias.** Volatility thresholds are estimated on 2000–2020 in-sample data only
-and stored as fixed constants. The out-of-sample period never influences any parameter.
+**No look-ahead bias.** The volatility thresholds are computed only on data from 2000 to 2020
+and treated as fixed numbers from that point on. Using the full dataset including 2020-2026
+would mean the model implicitly knows about COVID when classifying a day in 2005, because
+those extreme 2020 values shift where the threshold sits. Fixing the thresholds to the
+in-sample window eliminates this completely.
 
-**No machine learning.** Classification is fully deterministic and inspectable. Every regime
-assignment on every day traces directly to the underlying price and volatility values.
+**No machine learning.** Everything is rule-based and deterministic. Every regime assignment
+traces directly to that day's price and volatility values. Nothing is fitted, nothing is
+optimised, and nothing could have silently overfit to the historical data.
 
-**No external data.** The only input is a daily closing price series.
-
-**Extensible by design.** The regime label and confidence score are clean scalar outputs
-on every trading day — direct inputs for portfolio overlays, position sizing rules,
-or higher-level quantitative models.
+**No external data.** The only input is a daily closing price. That's it.
 
 ---
 
 ## Limitations
 
-**Lagging by construction.** The 200-day MA and 20-day vol window are backward-looking.
-The 3-day persistence filter adds a further minimum 2-day delay. Regime changes are confirmed
-after the fact, not predicted in advance.
+**It lags.** The 200-day MA and 20-day vol window both look backward by definition. The
+persistence filter adds at least 2 more days on top of that. Regime changes are confirmed
+after the fact, not predicted.
 
-**Fixed calibration window.** Thresholds reflect SPY's volatility distribution from 2000–2020.
-If the structural volatility of the market shifts materially, periodic recalibration is advisable.
+**Thresholds are calibrated to SPY.** Applying this to individual stocks, bonds, or
+commodities without recalibrating the volatility thresholds will give wrong results.
+The SPY numbers do not transfer to an asset with a different volatility profile.
 
-**Single-asset calibration.** Designed for a broad equity index ETF. Applying to individual
-stocks, fixed income, or commodities requires recalibrating the volatility thresholds.
+**Gross Sharpe ratios.** No risk-free rate has been subtracted from any figures shown.
+Subtract the prevailing 3-month T-bill rate to get the true excess-return Sharpes.
 
-**Gross Sharpe ratios.** No risk-free rate is deducted. Subtract the prevailing short rate
-to compute excess-return Sharpe ratios (reduces all figures by roughly 0.2–0.5, depending
-on the interest rate environment).
-
-**No transaction costs.** Backtest statistics assume frictionless execution.
+**No transaction costs.** The backtest statistics assume frictionless execution.
+Any real strategy acting on these signals will face trading costs.
 
 ---
 
 ## Documentation
 
-[`trend_volatility.pdf`](trend_volatility.pdf) is a complete technical reference
-covering every design decision from first principles: the mathematics of each feature,
-the economic rationale for every parameter choice, the look-ahead bias problem and how it
-is avoided, the RISK\_ON return paradox with full sub-period analysis, crisis-year validation,
-transition matrix interpretation, and an honest accounting of all limitations.
-Written to be defensible as a standalone document.
+[`trend_volatility.pdf`](trend_volatility.pdf) is the full 21-page technical write-up.
+It covers the math behind every feature, the rationale for the 200-day MA and 20-day vol
+window, a step-by-step numerical example showing exactly how look-ahead bias would corrupt
+the 2005 classifications if full-dataset thresholds were used, the complete confidence score
+derivation, the RISK_ON return paradox broken down sub-period by sub-period, and an
+honest list of everything this model cannot do.
+
+---
+
+## Dependencies
+
+```
+yfinance   >= 0.2.40
+pandas     >= 2.0.0
+numpy      >= 1.26.0
+matplotlib >= 3.8.0
+```
