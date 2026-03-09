@@ -55,7 +55,7 @@ with tighter controls. Do not add to positions until volatility resolves lower.*
 > into coherent calendar sub-periods, RISK\_ON produces Sharpe ratios of 0.64–2.18 among
 > the best risk-adjusted performance of any regime. The correct metrics here are
 > **Sharpe ratio** and **max drawdown (−22.3%)**, not raw return.
-> Full explanation in the [model manual](Model_Manual.pdf).
+> Full explanation in the [model manual](trend_volatility.pdf).
 
 ---
 
@@ -194,7 +194,7 @@ regime-detection/
 ├── plotting.py               # All six visualisation types
 ├── run.py                    # End-to-end pipeline; accepts ticker as CLI argument
 ├── README.md
-└── Method1_Model_Manual.pdf  # Model documentation
+└── trend_volatility.pdf  # Model documentation
 ```
 
 ---
@@ -237,7 +237,7 @@ on the interest rate environment).
 
 ## Documentation
 
-[`Method1_Model_Manual.pdf`](Method1_Model_Manual.pdf) is a complete technical reference
+[`trend_volatility.pdf`](trend_volatility.pdf) is a complete technical reference
 covering every design decision from first principles: the mathematics of each feature,
 the economic rationale for every parameter choice, the look-ahead bias problem and how it
 is avoided, the RISK\_ON return paradox with full sub-period analysis, crisis-year validation,
