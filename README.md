@@ -75,7 +75,7 @@ history has already judged. No parameters were tuned to these outcomes.
 
 ## How It Works
 
-### Step 1 — Features (`features.py`)
+### 1. Features (`features.py`)
 
 All inputs are derived from daily closing prices. No external data, no analyst estimates.
 
@@ -86,7 +86,7 @@ All inputs are derived from daily closing prices. No external data, no analyst e
 | 200-day MA | `MA = mean(P_{t-199:t})` | Long-term trend proxy (~1 business year) |
 | Trend distance | `(P_t − MA) / MA` | Trend conviction; feeds confidence score |
 
-### Step 2 — State Variables (`method1.py`)
+### 2. State Variables (`method1.py`)
 
 **Trend state** — price position relative to the 200-day MA:
 
@@ -99,7 +99,7 @@ data, including the out-of-sample period. Zero look-ahead.
 - `LOW` (≤ 33rd pct) · `MEDIUM` (33rd–66th pct) · `HIGH` (> 66th pct)
 - Smoothed with a **5-day rolling majority vote** to suppress threshold-boundary flicker
 
-### Step 3 — Regime Classification
+### 3. Regime Classification
 
 A 3×2 grid maps every (trend state, vol state) pair to a named regime:
 
@@ -110,7 +110,7 @@ Trend: DOWN  → RISK_OFF_TRANS.    RISK_OFF_TRANS.    RISK_OFF
 Trend: FLAT  → NEUTRAL            NEUTRAL            NEUTRAL
 ```
 
-### Step 4 — Persistence Filter
+### 4. Persistence Filter
 
 A candidate regime must appear on **3 consecutive days** before it is accepted.
 Until confirmed, the previous regime is carried forward.
@@ -118,7 +118,7 @@ Until confirmed, the previous regime is carried forward.
 Result: **zero regime blocks shorter than 3 days** across 281 total blocks and 6,383 trading
 days. The filter is strictly backward-looking — no look-ahead.
 
-### Step 5 — Confidence Score
+### 5. Confidence Score
 
 A composite `[0, 1]` score measuring how clearly the market is expressing the current regime:
 
@@ -158,12 +158,12 @@ but compounding quickly over a two-to-three week horizon.
 
 ## Outputs
 
-**Terminal — live signal, last 5 trading days**
+**Terminal live signal, last 5 trading days**
 ```
 2026-03-05 | RISK_ON_FRAGILE      | Trend: UP      | Vol: MEDIUM | Conf: [█████████████████░░░] 88.8%
 ```
 
-**Charts — 6 visualisations generated on every run**
+**Charts: 6 visualisations generated on every run**
 
 | Chart | What it shows |
 |---|---|
@@ -193,7 +193,6 @@ regime-detection/
 ├── analytics.py              # Per-regime performance statistics and bar charts
 ├── plotting.py               # All six visualisation types
 ├── run.py                    # End-to-end pipeline; accepts ticker as CLI argument
-├── requirements.txt
 ├── README.md
 └── Method1_Model_Manual.pdf  # Model documentation
 ```
